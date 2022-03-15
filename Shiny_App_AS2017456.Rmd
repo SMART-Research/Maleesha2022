@@ -32,6 +32,20 @@ fileInput("file", "Choose CSV File",
                          ".csv"))
 ```
 
+
+```{r}
+renderUI({
+if(testing){
+  df <- read_csv("Iris.csv")
+  }else{
+  req(input$file)
+  df <- read_csv(input$file$datapath)
+  }
+selectInput("summary_variable","Select Numerical variable",
+            choices = colnames(df %>% select_if(is.numeric)))
+})
+```
+
 Row
 ---------------------------------------------------------------
 
@@ -48,8 +62,8 @@ renderPlot({
   df %>% 
     skimr::skim() %>% 
     count(skim_type) %>% 
-    ggplot(aes(x = skim_type,y= n))+
-    geom_bar(stat="identity",fill="firebrick")+
+    ggplot(aes(x = skim_type,y= n,fill=skim_type))+
+    geom_bar(stat="identity")+
     labs(title = "Variable Types",x = "Variable type",y = "Count") +
     coord_flip() + 
     theme_minimal() +
@@ -58,20 +72,8 @@ renderPlot({
 ```
 
 ### Summary measures
+
 ```{r}
-renderUI({
-  
-if(testing){
-  df <- read_csv("Iris.csv")
-  }else{
-  req(input$file)
-  df <- read_csv(input$file$datapath)
-  }
-selectInput("summary_variable","Select Numerical variable",
-            choices = colnames(df %>% select_if(is.numeric)))
-
-})
-
 renderTable({
   if(testing){
   df <- read_csv("Iris.csv")
@@ -109,6 +111,56 @@ DT::renderDataTable({
   fillContainer = TRUE)
 })
 ```
+
+
+Missing Values
+=========================================================================
+
+Row
+-------------------------------------------------------------------------
+
+### Missing Value Plot
+
+```{r}
+renderPlot({
+  if(testing){
+  df <- read_csv("Iris.csv")
+  }else{
+  req(input$file)
+  df <- read_csv(input$file$datapath)
+  }
+  df %>% 
+    skimr::skim() %>% 
+    tibble() %>% 
+    filter(n_missing != 0) %>% 
+    mutate(skim_variable = fct_reorder(skim_variable,n_missing)) %>% 
+    ggplot(aes(x = skim_variable,y= n_missing,fill=skim_type))+
+    geom_bar(stat="identity")+
+    labs(title = "Missing values by variables",
+         x = "Variable",y = "Missing count",fill = "Variable type") +
+    coord_flip() + 
+    theme_minimal() +
+    theme(legend.position = "bottom")
+})
+```
+
+Row
+-------------------------------------------------------------------------
+
+### Missing Value Matrix
+
+```{r}
+renderPlot({
+  if(testing){
+  df <- read_csv("Iris.csv")
+  }else{
+  req(input$file)
+  df <- read_csv(input$file$datapath)
+  }
+  visdat::vis_miss(df,sort_miss=TRUE)
+})
+```
+
 
 Correlation
 ==========================================================================
@@ -254,8 +306,8 @@ renderPlot({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  ggplot(df,aes(y = !!sym(input$`Variable 2`),
-                x = !!sym(input$`Variable 1`)))+
+  ggplot(df,aes(y = !!sym(input$`Variable 1`),
+                x = !!sym(input$`Variable 2`)))+
     geom_boxplot()+
     coord_flip()+
     theme_minimal()+
