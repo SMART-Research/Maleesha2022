@@ -12,7 +12,7 @@ library(flexdashboard)
 library(tidyverse)
 library(visdat)
 library(plotly)
-
+library(RColorBrewer)
 testing <- FALSE
 ```
 
@@ -144,9 +144,6 @@ renderPlot({
 })
 ```
 
-Row
--------------------------------------------------------------------------
-
 ### Missing Value Matrix
 
 ```{r}
@@ -165,9 +162,38 @@ renderPlot({
 Correlation
 ==========================================================================
 
+Column {.sidebar}
+----------------------------------------------------------
+  
+```{r}
+renderUI({
+  if(testing){
+  df <- read_csv("Iris.csv")
+  }else{
+  req(input$file)
+  df <- read_csv(input$file$datapath)
+  }
+  selectInput("Variable 3", label = "Select X axis variable", choices = colnames(df %>% select_if(is.numeric)))
+})
+```
+
+```{r}
+renderUI({
+  if(testing){
+  df <- read_csv("Iris.csv")
+  }else{
+  req(input$file)
+  df <- read_csv(input$file$datapath)
+  }
+  selectInput("Variable 4", label = "Select Y axis variable", choices = colnames(df %>% select_if(is.numeric)))
+})
+```
+
 Row
---------------------------------------------
-### Correlation
+---------------------------------------------------------------
+
+### Correlation (Pearson)
+
 ```{r}
 renderPlotly({
   if(testing){
@@ -179,6 +205,26 @@ renderPlotly({
   visdat::vis_cor(df %>% select_if(is.numeric)) +
     scale_fill_gradient(low="yellow",high="dark red")
   #ggplotly(vis_cor(df %>% select_if(is.numeric)))
+})
+```
+
+### Scatterplot
+
+```{r}
+renderPlot({
+  if(testing){
+  df <- read_csv("Iris.csv")
+  }else{
+  req(input$file)
+  df <- read_csv(input$file$datapath)
+  }
+  ggplot(df,aes(x = !!sym(input$`Variable 3`),
+                y = !!sym(input$`Variable 4`))) +
+    geom_point() +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    labs(x = input$`Variable 3`,y = input$`Variable 4`,
+         title = paste("Scatterplot of",input$`Variable 3`,"and",input$`Variable 4`))
 })
 ```
 
@@ -277,7 +323,7 @@ renderUI({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  selectInput("Variable 1", label = "Select numerical variable", choices = colnames(df %>% select_if(is.numeric)))
+  selectInput("Variable 5", label = "Select numerical variable", choices = colnames(df %>% select_if(is.numeric)))
 })
 ```
 
@@ -289,7 +335,7 @@ renderUI({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  selectInput("Variable 2", label = "Select categorical variable:", choices = colnames(df %>% select_if(is.character)))
+  selectInput("Variable 6", label = "Select categorical variable:", choices = colnames(df %>% select_if(is.character)))
 })
 ```   
 
@@ -306,13 +352,13 @@ renderPlot({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  ggplot(df,aes(y = !!sym(input$`Variable 1`),
-                x = !!sym(input$`Variable 2`)))+
+  ggplot(df,aes(y = !!sym(input$`Variable 5`),
+                x = !!sym(input$`Variable 6`)))+
     geom_boxplot()+
     coord_flip()+
     theme_minimal()+
-    labs(x = input$`Variable 2`,y = input$`Variable 1`,
-         title = paste("Boxplot of",input$`Variable 1`,"by",input$`Variable 2`))
+    labs(x = input$`Variable 6`,y = input$`Variable 5`,
+         title = paste("Boxplot of",input$`Variable 5`,"by",input$`Variable 6`))
 })
 ```
 
@@ -329,7 +375,7 @@ renderUI({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  selectInput("Variable 3", label = "Select X axis variable", choices = colnames(df %>% select_if(is.numeric)))
+  selectInput("Variable 7", label = "Select X axis variable", choices = colnames(df %>% select_if(is.numeric)))
 })
 ```
 
@@ -341,7 +387,7 @@ renderUI({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  selectInput("Variable 4", label = "Select Y axis variable", choices = colnames(df %>% select_if(is.numeric)))
+  selectInput("Variable 8", label = "Select Y axis variable", choices = colnames(df %>% select_if(is.numeric)))
 })
 ```
 
@@ -353,7 +399,7 @@ renderUI({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  selectInput("Variable 5", label = "Select Color by Variable:", choices = colnames(df %>% select_if(is.character)))
+  selectInput("Variable 9", label = "Select Color by Variable:", choices = colnames(df %>% select_if(is.character)))
 })
 ```
 
@@ -371,14 +417,14 @@ renderPlot({
   req(input$file)
   df <- read_csv(input$file$datapath)
   }
-  ggplot(df,aes(x = !!sym(input$`Variable 3`),
-                y = !!sym(input$`Variable 4`),
-                color = !!sym(input$`Variable 5`))) +
+  ggplot(df,aes(x = !!sym(input$`Variable 7`),
+                y = !!sym(input$`Variable 8`),
+                color = !!sym(input$`Variable 9`))) +
     geom_point() +
     theme_minimal() +
-    theme(legend.position = "bottom") +
-    labs(x = input$`Variable 3`,y = input$`Variable 4`,
-         title = paste("Scatterplot of",input$`Variable 3`,"and",input$`Variable 4`),subtitle = paste("Color by",input$`Variable 5`))
+    theme(legend.position = "bottom") + scale_color_brewer(palette="Dark2")
+    labs(x = input$`Variable 7`,y = input$`Variable 8`,
+         title = paste("Scatterplot of",input$`Variable 7`,"and",input$`Variable 8`),subtitle = paste("Color by",input$`Variable 9`))
   # plot_ly(df,
   #         x = ~df[[input$`Variable 1`]],
   #         color = ~df[[input$`Variable 2`]],
